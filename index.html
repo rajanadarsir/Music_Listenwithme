@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Singwithme — Music for everyone</title>
+<meta name="description" content="Singwithme is a modern music streaming experience." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --bg:#0a0a0a; --sidebar:#000; --surface:#181818; --surface-hover:#252525;
+    --text:#fff; --text-sub:#b3b3b3; --brand:#1ed760; --brand-hover:#1fdf64;
+    --border:rgba(255,255,255,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:#000;color:var(--text);
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  .display{font-family:'Montserrat',sans-serif;font-weight:800;letter-spacing:-.02em}
+
+  /* Layout */
+  .app{height:100vh;display:flex;flex-direction:column;background:#000}
+  .main{flex:1;display:flex;gap:8px;padding:8px;min-height:0}
+  .sidebar{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+  .sidebar-card{background:var(--sidebar);border-radius:8px;padding:8px}
+  .logo{display:flex;align-items:center;gap:10px;padding:14px 12px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:20px}
+  .logo svg{color:var(--brand)}
+  .nav-item{display:flex;align-items:center;gap:16px;padding:10px 12px;border-radius:6px;font-weight:700;font-size:14px;color:var(--text-sub);transition:color .15s}
+  .nav-item:hover,.nav-item.active{color:var(--text)}
+  .library{flex:1;display:flex;flex-direction:column;min-height:0}
+  .library-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+  .library-head-title{display:flex;align-items:center;gap:12px;color:var(--text-sub);font-weight:700;font-size:14px}
+  .library-head-title:hover{color:var(--text)}
+  .icon-btn{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--text-sub);transition:all .15s}
+  .icon-btn:hover{color:var(--text);background:var(--surface-hover)}
+  .playlist-list{flex:1;overflow-y:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:2px}
+  .playlist-item{display:flex;align-items:center;gap:12px;padding:8px;border-radius:6px;transition:background .15s;cursor:pointer}
+  .playlist-item:hover{background:var(--surface-hover)}
+  .playlist-thumb{width:48px;height:48px;border-radius:4px;flex-shrink:0;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--text-sub);object-fit:cover}
+  .playlist-thumb.liked{background:linear-gradient(135deg,#7c3aed,#f0abfc);color:#fff}
+  .playlist-meta{min-width:0}
+  .playlist-meta .t{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .playlist-meta .s{font-size:12px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .content{flex:1;background:var(--bg);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;flex-shrink:0;position:sticky;top:0;z-index:10;background:rgba(10,10,10,.6);backdrop-filter:blur(12px)}
+  .nav-arrows{display:flex;gap:8px}
+  .nav-arrow{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .nav-arrow:hover{background:rgba(0,0,0,.9)}
+  .topbar-right{display:flex;align-items:center;gap:16px}
+  .top-link{font-weight:700;font-size:14px;color:var(--text-sub);transition:transform .15s,color .15s}
+  .top-link:hover{color:var(--text);transform:scale(1.05)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#000;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .scroll{flex:1;overflow-y:auto}
+
+  /* Hero gradient */
+  .hero{background:linear-gradient(180deg,#1f6e3a 0%,var(--bg) 80%);padding:32px 24px 24px}
+  .hero h1{font-size:32px;margin-bottom:24px}
+  .quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .quick-tile{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;transition:background .15s;cursor:pointer}
+  .quick-tile:hover{background:rgba(255,255,255,.2)}
+  .quick-tile img{width:64px;height:64px;object-fit:cover;flex-shrink:0}
+  .quick-tile span{font-weight:700;font-size:14px;padding-right:16px}
+
+  /* Sections */
+  .section{padding:24px}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+  .section-head h2{font-size:24px;cursor:pointer}
+  .section-head h2:hover{text-decoration:underline}
+  .show-all{font-size:12px;font-weight:700;color:var(--text-sub)}
+  .show-all:hover{text-decoration:underline}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+
+  .card{background:#181818;border-radius:8px;padding:16px;transition:background .2s;cursor:pointer;position:relative}
+  .card:hover{background:#252525}
+  .card-cover{position:relative;margin-bottom:16px}
+  .card-cover img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .card-play{position:absolute;bottom:8px;right:8px;width:48px;height:48px;border-radius:50%;background:var(--brand);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(0,0,0,.4);opacity:0;transform:translateY(8px);transition:all .2s}
+  .card:hover .card-play,.card-play.visible{opacity:1;transform:translateY(0)}
+  .card-play:hover{transform:scale(1.05);background:var(--brand-hover)}
+  .card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-sub{font-size:12px;color:var(--text-sub);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Playlist page */
+  .pl-hero{display:flex;align-items:flex-end;gap:24px;padding:40px 24px 24px;background:linear-gradient(180deg,#1a4f2a 0%,var(--bg) 100%)}
+  .pl-hero img{width:208px;height:208px;object-fit:cover;border-radius:4px;box-shadow:0 16px 48px rgba(0,0,0,.6)}
+  .pl-hero-info{min-width:0}
+  .pl-hero-info .kicker{font-size:12px;font-weight:700;text-transform:uppercase}
+  .pl-hero-info h1{font-size:64px;margin:12px 0;line-height:1}
+  .pl-hero-info .meta{font-size:14px;color:var(--text-sub)}
+  .pl-hero-info .meta strong{color:var(--text);font-weight:600}
+  .pl-actions{padding:24px;background:linear-gradient(180deg,rgba(0,0,0,.4),transparent)}
+  .play-btn{width:56px;height:56px;border-radius:50%;background:var(--brand);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(0,0,0,.4);transition:all .15s}
+  .play-btn:hover{transform:scale(1.05);background:var(--brand-hover)}
+  .track-list{padding:0 24px 24px}
+  .track-head,.track-row{display:grid;grid-template-columns:24px 4fr 3fr 40px 80px;gap:16px;padding:8px 16px;align-items:center}
+  .dl-btn{background:none;border:none;color:var(--text-sub);cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .dl-btn:hover{color:var(--text);background:var(--surface-hover)}
+  .track-head{border-bottom:1px solid var(--border);color:var(--text-sub);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+  .track-row{border-radius:4px;cursor:pointer}
+  .track-row:hover{background:var(--surface-hover)}
+  .track-num{color:var(--text-sub);font-size:14px;text-align:center;font-variant-numeric:tabular-nums}
+  .track-row:hover .track-num{display:none}
+  .track-play{display:none;color:var(--text)}
+  .track-row:hover .track-play{display:block}
+  .track-info{display:flex;align-items:center;gap:12px;min-width:0}
+  .track-info img{width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0}
+  .track-info .ti-meta{min-width:0}
+  .ti-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ti-title.current{color:var(--brand)}
+  .ti-artist{font-size:12px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track-album,.track-time{font-size:14px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track-time{text-align:right;font-variant-numeric:tabular-nums}
+
+  /* Search */
+  .search-input-wrap{position:relative;max-width:380px;margin-bottom:32px}
+  .search-input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-sub)}
+  .search-input{width:100%;background:var(--surface);color:var(--text);border:none;border-radius:500px;padding:12px 16px 12px 44px;font-size:14px;outline:none;font-family:inherit}
+  .search-input:focus{outline:2px solid #fff3}
+  .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+  .cat-card{aspect-ratio:1.5;border-radius:8px;padding:16px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px;cursor:pointer;transition:filter .15s;color:#fff}
+  .cat-card:hover{filter:brightness(1.1)}
+
+  /* Player bar */
+  .player{height:90px;background:#000;border-top:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+  .player-left{display:flex;align-items:center;gap:14px;width:30%;min-width:0}
+  .player-left img{width:56px;height:56px;border-radius:4px;object-fit:cover;flex-shrink:0}
+  .pl-info{min-width:0}
+  .pl-info .t{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .pl-info .t:hover{text-decoration:underline}
+  .pl-info .a{font-size:11px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .pl-info .a:hover{color:var(--text);text-decoration:underline}
+  .player-center{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:722px;margin:0 auto}
+  .controls{display:flex;align-items:center;gap:20px}
+  .ctrl-btn{color:var(--text-sub);transition:color .15s;display:flex;align-items:center}
+  .ctrl-btn:hover{color:var(--text)}
+  .ctrl-btn.active{color:var(--brand)}
+  .play-main{width:36px;height:36px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+  .play-main:hover{transform:scale(1.06)}
+  .progress{display:flex;align-items:center;gap:8px;width:100%}
+  .time{font-size:11px;color:var(--text-sub);font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
+  .time:last-child{text-align:left}
+  .player-right{display:flex;align-items:center;gap:8px;width:30%;justify-content:flex-end;color:var(--text-sub)}
+  .vol-slider{width:96px}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;
+    background:linear-gradient(to right,#fff var(--p,0%),rgba(255,255,255,.3) var(--p,0%))
+  }
+  input[type=range]:hover{background:linear-gradient(to right,var(--brand) var(--p,0%),rgba(255,255,255,.3) var(--p,0%))}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;opacity:0;transition:opacity .15s}
+  input[type=range]:hover::-webkit-slider-thumb{opacity:1}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:none;opacity:0}
+  input[type=range]:hover::-moz-range-thumb{opacity:1}
+
+  .scroll::-webkit-scrollbar,.playlist-list::-webkit-scrollbar{width:12px}
+  .scroll::-webkit-scrollbar-thumb,.playlist-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:6px;border:3px solid transparent;background-clip:padding-box}
+  .scroll::-webkit-scrollbar-thumb:hover,.playlist-list::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.3);background-clip:padding-box}
+
+  .footer{padding:60px 24px 24px;font-size:12px;color:var(--text-sub)}
+  .hidden{display:none!important}
+  .empty{padding:48px;text-align:center;color:var(--text-sub)}
+
+  @media (max-width:768px){
+    .sidebar{display:none}
+    .pl-hero{flex-direction:column;align-items:flex-start;padding:24px}
+    .pl-hero h1{font-size:40px}
+    .player-right{display:none}
+    .player-left{width:50%}
+    .track-head,.track-row{grid-template-columns:24px 1fr 40px 60px}
+    .track-album{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <a href="#/" class="logo">
+          <i data-lucide="music-2"></i>
+          <span>Singwithme</span>
+        </a>
+        <nav style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+          <a href="#/" class="nav-item" data-nav="home"><i data-lucide="home"></i>Home</a>
+          <a href="#/search" class="nav-item" data-nav="search"><i data-lucide="search"></i>Search</a>
+        </nav>
+      </div>
+      <div class="sidebar-card library">
+        <div class="library-head">
+          <button class="library-head-title"><i data-lucide="library"></i>Your Library</button>
+          <button class="icon-btn"><i data-lucide="plus"></i></button>
+        </div>
+        <div class="playlist-list" id="playlist-list"></div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+      <header class="topbar">
+        <div class="nav-arrows">
+          <button class="nav-arrow" onclick="history.back()"><i data-lucide="chevron-left"></i></button>
+          <button class="nav-arrow" onclick="history.forward()"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div class="topbar-right">
+          <a class="top-link" href="#/">Premium</a>
+          <a class="top-link" href="#/">Support</a>
+          <span style="width:1px;height:24px;background:var(--border)"></span>
+          <div class="avatar">S</div>
+        </div>
+      </header>
+      <div class="scroll" id="view"></div>
+    </main>
+  </div>
+
+  <!-- Player -->
+  <div class="player">
+    <div class="player-left" id="pl-left">
+      <div style="font-size:14px;color:var(--text-sub)">Select a song to play</div>
+    </div>
+    <div class="player-center">
+      <div class="controls">
+        <button class="ctrl-btn" id="shuffle-btn" title="Shuffle"><i data-lucide="shuffle" style="width:18px;height:18px"></i></button>
+        <button class="ctrl-btn" onclick="prevSong()" title="Previous"><i data-lucide="skip-back" fill="currentColor" style="width:20px;height:20px"></i></button>
+        <button class="play-main" onclick="togglePlay()" id="play-main"><i data-lucide="play" fill="currentColor" style="width:18px;height:18px;margin-left:2px"></i></button>
+        <button class="ctrl-btn" onclick="nextSong()" title="Next"><i data-lucide="skip-forward" fill="currentColor" style="width:20px;height:20px"></i></button>
+        <button class="ctrl-btn" id="repeat-btn" title="Repeat"><i data-lucide="repeat" style="width:18px;height:18px"></i></button>
+      </div>
+      <div class="progress">
+        <span class="time" id="time-cur">0:00</span>
+        <input type="range" id="seek" min="0" max="0" value="0" />
+        <span class="time" id="time-dur">0:00</span>
+      </div>
+    </div>
+    <div class="player-right">
+      <button class="ctrl-btn" id="mute-btn"><i data-lucide="volume-2" style="width:16px;height:16px"></i></button>
+      <input type="range" id="volume" class="vol-slider" min="0" max="1" step="0.01" value="0.8" />
+    </div>
+  </div>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+/* ============== DATA ============== */
+const COVERS = [
+  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1504509546545-e000b4a62425?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1446057032654-9d8885db76c6?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1419640303358-44f0d27f48e7?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop",
+];
+
+const RAW = [
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240157/Adiye_Sakkarakatti_mwpmgy.mp3", "Adiye Sakkarakatti", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240152/Aiyo_Aiyayo_Vaadi_Nee_Vaa_oauto9.mp3", "Aiyo Aiyayo Vaadi Nee Vaa", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240151/Enna_Nadanthaalum_Penne_owwjmu.mp3", "Enna Nadanthaalum Penne", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240151/Boomerang_Yaaro_Aapu_Vaikka_Porathu_sywa1v.mp3", "Boomerang Yaaro Aapu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240149/Ellame_Kaasu_Ellame_Kaasu_Kaasuthan_Mass_pn8lbf.mp3", "Ellame Kaasu Kaasuthan Mass", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240148/Kaiya_Pudicha_Thaarumaaru_Thaarumaaru_yfw1wd.mp3", "Kaiya Pudicha Thaarumaaru", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240148/Kadhal_Crickettu._x3ykig.mp3", "Kadhal Crickettu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240147/Enmela_Kadhal_Poraada_Poraada_oh7muy.mp3", "Enmela Kadhal Poraada", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240147/Happy_Happy_New_Year_cbivkq.mp3", "Happy Happy New Year", "Festive"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240144/Kannu_Athu_Kannu_Mathiri_Karakudi_Ilavarasi_yjyfuw.mp3", "Kannu Athu Kannu Mathiri", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240144/Thaai_Mozhi_Nee_Enakku_Theeratha_Vilayattu_Pillai_c8ps3i.mp3", "Thaai Mozhi Nee Enakku", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240143/Konja_Neram_Konja_Kalam_Nan_Konjam_Karupputhan_q3iiwq.mp3", "Konja Neram Konja Kalam", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240143/Kadhale_Kadhale_Ennai_jtdl2j.mp3", "Kadhale Kadhale Ennai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240142/Kadhalikkathe_Manase_Kadhalikkathe_edzzac.mp3", "Kadhalikkathe Manase", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240139/Krishnaa_Mukundhaa_Muraare_Mudhalaai_Mudhan_Mudhalaai_vdmurm.mp3", "Krishnaa Mukundhaa Muraare", "Devotional"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240138/Nenjorama_Oru_Kadhal_Kannaala_Kannala_pk6z1k.mp3", "Nenjorama Oru Kadhal", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240138/Kuchi_Mittai_Kuruvi_Rotti_lhrb3f.mp3", "Kuchi Mittai Kuruvi Rotti", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240138/Maatikichu_Maatikichu_n010gr.mp3", "Maatikichu Maatikichu", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240137/Maathurangalam_Ethaiyo_Maathurangalam_dc69gp.mp3", "Maathurangalam Ethaiyo", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240135/Naanethan_Raja_Machi_gmmu0m.mp3", "Naanethan Raja Machi", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240134/Nan_Common_Aana_Ambala_Madras_to_Madurai_tzksqs.mp3", "Nan Common Aana Ambala", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240134/Machi_Engalukku_Ellam_Oru_Love_Than_bnh6b4.mp3", "Machi Engalukku Ellam Oru Love", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240133/Pudichiruka_illa_Pudikalaya_Illa_aqjrhr.mp3", "Pudichiruka illa Pudikalaya", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240131/Saitji_Saitji_Saitji_Thumaaraa_Beti_tsysew.mp3", "Saitji Saitji Thumaaraa Beti", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240131/Oru_Kuchi_Oru_Kulfi_Unkoodathan_Photo_v9yodh.mp3", "Oru Kuchi Oru Kulfi", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240130/Oxygen_Thanthaye_Munnoru_Pozhuthinile_rgycn4.mp3", "Oxygen Thanthaye", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240129/Un_Perenna_Theriyathu_Pazhagikkalaam_i7rhnx.mp3", "Un Perenna Theriyathu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240126/Theemaithaan_Vellum_Awakening_the_Monster_kxikoc.mp3", "Theemaithaan Vellum", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240126/Thaanaa_Thannannana_Erangi_Vandhu_Aadu_w4iejm.mp3", "Thaanaa Thannannana", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240126/Unmaiyana_Kadhal_Enge_Aye_Aye_Aye_bjdssw.mp3", "Unmaiyana Kadhal Enge", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778240124/iPhone_6_Nee_Endraal_uepp85.mp3", "iPhone 6 Nee Endraal", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391428/Aathi_Ena_Nee_Partha_Udana_dlcezd.mp3", "Aathi Ena Nee Partha Udana", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391427/Amma_Amma_Ne_Enge_Amma_pu5ovp.mp3", "Amma Amma Ne Enge Amma", "Devotional"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391426/Darling_Dambakku_fysrbp.mp3", "Darling Dambakku", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391424/Anbe_Anbe_Kadhal_Varuthe_Im_So_Cool_ho6eq2.mp3", "Anbe Anbe Kadhal Varuthe Im So Cool", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391422/Bagulu_Odayum_Dagulu_Mari_aq1sgt.mp3", "Bagulu Odayum Dagulu Mari", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391421/Boomi_Enna_Suthudhe_uhjk2z.mp3", "Boomi Enna Suthudhe", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391418/En_Kadhal_Thee_tpjgdx.mp3", "En Kadhal Thee", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391416/Hey_Inga_Paaaru_vgcqhc.mp3", "Hey Inga Paaaru", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391416/Idhazhin_Oram_jzgou3.mp3", "Idhazhin Oram", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391415/Hey_Kaatril_Etho_Puthu_Vasam_su1bvd.mp3", "Hey Kaatril Etho Puthu Vasam", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391413/Kadhal_Kan_Kattuthe_kbh1vz.mp3", "Kadhal Kan Kattuthe", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391412/Kani_Mozhiye_Ennai_shon5s.mp3", "Kani Mozhiye Ennai", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391409/Kannazhaga_kbgjy4.mp3", "Kannazhaga", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391408/Kattikida_Munne_Nama_pspyrp.mp3", "Kattikida Munne Nama", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391407/Kottu_Kottu_Melam_Kotti_rw43q6.mp3", "Kottu Kottu Melam Kotti", "Festive"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391406/Life_la_Wife_yccopt.mp3", "Life La Wife", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391404/Maanja_Pottuthan_q2t3it.mp3", "Maanja Pottuthan", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391403/Mannavane_En_Mannavane_thzbzs.mp3", "Mannavane En Mannavane", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391401/Nee_Partha_Vizhigal_cmo9ad.mp3", "Nee Partha Vizhigal", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391400/Oothungada_Sangu_ti1w7z.mp3", "Oothungada Sangu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391399/Nijamellam_Maranthu_Pochu_jfdyev.mp3", "Nijamellam Maranthu Pochu", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391396/Vinnai_Thandi_Anbe_ogod2s.mp3", "Vinnai Thandi Anbe", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391396/Oru_Vidha_Aasai_Varugirathaa_uygktr.mp3", "Oru Vidha Aasai Varugirathaa", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391393/Poo_Nee_Poo_Melody_ycylad.mp3", "Poo Nee Poo Melody", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391394/PanangKalla_Visa_Mulla_ciehpr.mp3", "PanangKalla Visa Mulla", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391393/Po_Indru_Neeyaga_wkmd5v.mp3", "Po Indru Neeyaga", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391391/Poo_Nee_Poo_Fast_i8flny.mp3", "Poo Nee Poo Fast", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391389/Royapuram_Peter_xr6cv7.mp3", "Royapuram Peter", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391388/Sari_Sari_Sarigama_Open_the_Tasmac_csbwie.mp3", "Sari Sari Sarigama Open The Tasmac", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391385/Theri_Kathoda_Thenai_Thelichale_xzt0kk.mp3", "Theri Kathoda Thenai Thelichale", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391385/Sathiyama_Ne_Enakku_c4ephr.mp3", "Sathiyama Ne Enakku", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391383/Tera_Tera_Byta_Kadhal_Irukku_Selfie_Pulla_gxg481.mp3", "Tera Tera Byta Kadhal Irukku Selfie Pulla", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391383/Speed_Speed_zwei1j.mp3", "Speed Speed", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391380/Thappathan_Therium_Namma_Route_qybbxy.mp3", "Thappathan Therium Namma Route", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391377/Ungalukku_India_Gate_i1kyio.mp3", "Ungalukku India Gate", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391377/Un_Kaigal_Korthu_Oh_Penne_dgjl5z.mp3", "Un Kaigal Korthu Oh Penne", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391377/Un_Vizhigalil_Vizhuntha_phczuc.mp3", "Un Vizhigalil Vizhuntha", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391375/What_A_Karavad_eugqjd.mp3", "What A Karavad", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391374/Yaar_Petra_Magano_Nee_i3upt6.mp3", "Yaar Petra Magano Nee", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778391373/Why_This_Kolaveri_lbczk8.mp3", "Why This Kolaveri", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395867/Aanadham_Anandham_zdmor1.mp3", "Aanadham Anandham", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395865/Aathichudi_apblo2.mp3", "Aathichudi", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395863/Aval_Appadi_Onrum_Azhagillai_mzddby.mp3", "Aval Appadi Onrum Azhagillai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395862/Azhaghai_Pookkuthe_ueq1af.mp3", "Azhaghai Pookkuthe", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395857/Boomiku_Velicham_ec50ab.mp3", "Boomiku Velicham", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395857/Chinna_Maamiye_zawesp.mp3", "Chinna Maamiye", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778395171/Chinna_Thamarai_qzygh7.mp3", "Chinna Thamarai", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778393794/Dailamo_Dailamo_ptuoi2.mp3", "Dailamo Dailamo", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778393533/Ean_Enakku_diox3f.mp3", "Ean Enakku", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778393120/En_Nenju_Chinna_Ilai_o8fawy.mp3", "En Nenju Chinna Ilai", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392901/En_Paarvaiyo_pd76nf.mp3", "En Paarvaiyo", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392899/En_Uchimandaila_ej6aj4.mp3", "En Uchimandaila", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392897/Enge_Poveno_opndeb.mp3", "Enge Poveno", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392895/Kadhal_Theviravathi_sxanwv.mp3", "Kadhal Theviravathi", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392894/Kakha_Kakha_iis2mg.mp3", "Kakha Kakha", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392892/Kan_Irrandil_gv7zv3.mp3", "Kan Irrandil", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392890/Kannil_Theriyum_Vaanam_wkoxux.mp3", "Kannil Theriyum Vaanam", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392889/Karigalan_iukw3k.mp3", "Karigalan", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392888/Kathaigalai_Pesum_hfr1wi.mp3", "Kathaigalai Pesum", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392885/Naakka_Mukka_wshahb.mp3", "Naakka Mukka", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392883/Naan_Unnai_ukinho.mp3", "Naan Unnai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392882/Naanthana_Naanthana_eh9tuj.mp3", "Naanthana Naanthana", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392881/Nan_Adicha_x3htiu.mp3", "Nan Adicha", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392878/Nanbanai_Partha_p8cc7b.mp3", "Nanbanai Partha", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392876/Natkal_Nagarnthu_fcazmk.mp3", "Natkal Nagarnthu", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392875/Nee_Kavidhai_vu9fkr.mp3", "Nee Kavidhai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392872/Nee_Otha_Sollu_Sollu_auphnn.mp3", "Nee Otha Sollu Sollu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392872/Nenjagootil_Neeye_njc9bz.mp3", "Nenjagootil Neeye", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392872/Oh_Rasikkum_p3pbjh.mp3", "Oh Rasikkum", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392868/Poo_Meedhu_Yaanai_lwv95h.mp3", "Poo Meedhu Yaanai", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392867/Poove_Poove_thwmjf.mp3", "Poove Poove", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392864/Puli_Urumudhu_qkbxxi.mp3", "Puli Urumudhu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392864/Radha_Kaadhal_pkzbti.mp3", "Radha Kaadhal", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392861/Solladi_ctnwwm.mp3", "Solladi", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392860/Suppose_Unnai_vj9zvf.mp3", "Suppose Unnai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392857/Surangani_yimouq.mp3", "Surangani", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392856/Thooral_Podum_xvi4s0.mp3", "Thooral Podum", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392854/Thozhiya_En_Kadhaliya_yasemd.mp3", "Thozhiya En Kadhaliya", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392852/Uchchimuthal_twcvyh.mp3", "Uchchimuthal", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392851/Ulagam_Unnaku_hudepl.mp3", "Ulagam Unnaku", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392849/Un_Perai_Sollum_Pothe_vlqcpm.mp3", "Un Perai Sollum Pothe", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392849/Unn_Thalai_Mudi_lb7yhs.mp3", "Unn Thalai Mudi", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392847/Unakkena_Naan_bbpkop.mp3", "Unakkena Naan", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392845/Vaanamthan_u413io.mp3", "Vaanamthan", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778392845/Yethanaiyo_Katha_Undu_a7ly11.mp3", "Yethanaiyo Katha Undu", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486338/Yathe_Yathe_ve7pm1.mp3", "Yathe Yathe", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486338/Yaaro_Nee_brqtyq.mp3", "Yaaro Nee", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486336/Yaro_En_Nenjai_bgt22f.mp3", "Yaro En Nenjai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486333/Wonder_Kuzhali_niw3yw.mp3", "Wonder Kuzhali", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486333/Why_This_Kolaveri_uwgu8b.mp3", "Why This Kolaveri", "Hits"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486331/Voda_Voda_Voda_rbu052.mp3", "Voda Voda Voda", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486331/Vayadhu_Vaa_Vaa_zyldtv.mp3", "Vayadhu Vaa Vaa", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486329/Vizhigalil_Vizhigalil_bftryc.mp3", "Vizhigalil Vizhigalil", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486328/Venmegam_sbya5d.mp3", "Venmegam", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486328/Thottu_Thottu_o9giil.mp3", "Thottu Thottu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486326/Ussumu_Laresay_w6gdoy.mp3", "Ussumu Laresay", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486325/Pethavanga_Parthuvacha_spxqgw.mp3", "Pethavanga Parthuvacha", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486323/Thevathayai_p2bknx.mp3", "Thevathayai", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486322/Pudhu_Kadhal_izolxe.mp3", "Pudhu Kadhal", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486322/Theriyaama_Parthuputen_f3gpch.mp3", "Theriyaama Parthuputen", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486319/Poo_Nee_Poo_Melody_dhnjxw.mp3", "Poo Nee Poo Melody", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486320/Theenda_Theenda_sgwqib.mp3", "Theenda Theenda", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486318/Pirai_Thedum_eaww8n.mp3", "Pirai Thedum", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486315/Padichu_Parthen_n05cij.mp3", "Padichu Parthen", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486314/Otha_Sollaala_zgorog.mp3", "Otha Sollaala", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486314/Oru_Naalil_t823qa.mp3", "Oru Naalil", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486312/Oru_Naalukul_puzvup.mp3", "Oru Naalukul", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486310/Ore_Oru_Varthaikaaga_uxd6kv.mp3", "Ore Oru Varthaikaaga", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486309/Nenjai_Kasaki_neoki5.mp3", "Nenjai Kasaki", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486309/Neruppu_Koothadikkudhu_n77tjy.mp3", "Neruppu Koothadikkudhu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486308/Nenjodu_ltyjeu.mp3", "Nenjodu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486263/Naan_Sonnadhum_Mazhai_Vandhucha_fr5vly.mp3", "Naan Sonnadhum Mazhai Vandhucha", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486262/Nee_Partha_hfkv5x.mp3", "Nee Partha", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486262/Nee_Kadhalikkum_Ponnu_osx69q.mp3", "Nee Kadhalikkum Ponnu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486259/Nattu_Sarakku_prp41k.mp3", "Nattu Sarakku", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486258/Minnal_Koothadum_tbphnk.mp3", "Minnal Koothadum", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486256/Manmatha_Rasa_spfram.mp3", "Manmatha Rasa", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486256/Mama_Paiyaa_yjcga9.mp3", "Mama Paiyaa", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486253/Malargale_xfzeo7.mp3", "Malargale", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486252/Kavithai_Iravu_gwkcmy.mp3", "Kavithai Iravu", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486252/Madura_Jilla_oprthu.mp3", "Madura Jilla", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486251/Life_la_Wife_uoovfg.mp3", "Life La Wife", "Dance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486242/Kan_Irrandil_kvzhcb.mp3", "Kan Irrandil", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486238/Kannu_Rendum_p8fzwo.mp3", "Kannu Rendum", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486238/Kannazhaga_cbxnda.mp3", "Kannazhaga", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486236/Kadhal_Mattum_o37qls.mp3", "Kadhal Mattum", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486236/Kan_Munne_Ethanai_Nilavu_sxhl52.mp3", "Kan Munne Ethanai Nilavu", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486233/Kadavulum_Kadhalum_qs8eux.mp3", "Kadavulum Kadhalum", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486232/Kaalangathale_z9biv5.mp3", "Kaalangathale", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486232/Feel_My_Love_lqy7f3.mp3", "Feel My Love", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486231/Kaadhal_Yen_Kaadhal_wgjpw7.mp3", "Kaadhal Yen Kaadhal", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486231/Ezhezhu_Jenmam_nyhumc.mp3", "Ezhezhu Jenmam", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486229/Idhu_Kadhala_unx1zv.mp3", "Idhu Kadhala", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486227/Ennenna_Seidhom_Ingae_ge3qzp.mp3", "Ennenna Seidhom Ingae", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486228/Hey_Vetri_Velaa_ximp1b.mp3", "Hey Vetri Velaa", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486227/Hey_Rosu_Rosu_vjw9za.mp3", "Hey Rosu Rosu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486220/Ayyayo_Nenju_flwer9.mp3", "Ayyayo Nenju", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486216/Azhage_Brammanidam_agn7wk.mp3", "Azhage Brammanidam", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486212/Ennama_Kannu_hry4cc.mp3", "Ennama Kannu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486208/Enna_Solla_Pore_qowxvw.mp3", "Enna Solla Pore", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486208/Engeyum_Eppothum_dsvydz.mp3", "Engeyum Eppothum", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486205/Antha_Naal_Gnapagam_swtc8o.mp3", "Antha Naal Gnapagam", "Soulful"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486205/Engeyo_Partha_Mayakam_gv8rlx.mp3", "Engeyo Partha Mayakam", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486204/Een_Nenju_dcekca.mp3", "Een Nenju", "Romance"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486201/Aaru_Padai_Veedu_bmsbgc.mp3", "Aaru Padai Veedu", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486201/Azhaga_Irukanga_tloel3.mp3", "Azhaga Irukanga", "Mass"],
+  ["https://res.cloudinary.com/dtx5p48mj/video/upload/v1778486200/Aadra_Raama_hsvhim.mp3", "Aadra Raama", "Mass"],
+];
+const SONGS = RAW.map((r,i)=>({id:String(i),url:r[0],title:r[1],album:r[2],artist:"Anirudh",cover:COVERS[i%COVERS.length]}));
+const PLAYLISTS = [
+  {name:"Today's Top Hits",description:"The hottest tracks right now",filter:s=>s.album==="Hits"},
+  {name:"Romance Vibes",description:"Love songs to set the mood",filter:s=>s.album==="Romance"},
+  {name:"Mass Anthems",description:"Energy on full volume",filter:s=>s.album==="Mass"},
+  {name:"Soulful Sessions",description:"Slow it down",filter:s=>s.album==="Soulful"},
+  {name:"Festive Mood",description:"Celebrate every day",filter:s=>s.album==="Festive"},
+  {name:"All Tracks",description:"The complete library",filter:_=>true},
+];
+const CAT_COLORS=["#dc148c","#0d73ec","#e91429","#1e3264","#8d67ab","#509bf5","#e8115b"];
+
+/* ============== STATE ============== */
+const state={queue:SONGS.slice(),index:-1,shuffle:false,repeat:false};
+const audio=document.getElementById("audio");
+audio.volume=0.8;
+
+/* ============== PLAYER ============== */
+function playSong(song,queue){
+  if(queue) state.queue=queue;
+  state.index=state.queue.findIndex(s=>s.id===song.id);
+  audio.src=song.url;
+  audio.play().catch(()=>{});
+  renderPlayerLeft();
+  refreshTrackHighlights();
+}
+function togglePlay(){
+  if(state.index===-1){ if(state.queue.length) playSong(state.queue[0]); return; }
+  if(audio.paused) audio.play(); else audio.pause();
+}
+function nextSong(){
+  if(!state.queue.length) return;
+  const i=state.shuffle?Math.floor(Math.random()*state.queue.length):(state.index+1)%state.queue.length;
+  playSong(state.queue[i]);
+}
+function prevSong(){
+  if(!state.queue.length) return;
+  if(audio.currentTime>3){audio.currentTime=0;return;}
+  const i=state.index<=0?state.queue.length-1:state.index-1;
+  playSong(state.queue[i]);
+}
+audio.addEventListener("timeupdate",()=>{
+  const seek=document.getElementById("seek");
+  seek.max=audio.duration||0;
+  seek.value=audio.currentTime;
+  setRangeFill(seek);
+  document.getElementById("time-cur").textContent=fmt(audio.currentTime);
+});
+audio.addEventListener("loadedmetadata",()=>{
+  document.getElementById("time-dur").textContent=fmt(audio.duration);
+});
+audio.addEventListener("play",()=>updatePlayIcon(true));
+audio.addEventListener("pause",()=>updatePlayIcon(false));
+audio.addEventListener("ended",()=>{
+  if(state.repeat){audio.currentTime=0;audio.play();} else nextSong();
+});
+
+document.getElementById("seek").addEventListener("input",e=>{audio.currentTime=+e.target.value;setRangeFill(e.target)});
+document.getElementById("volume").addEventListener("input",e=>{audio.volume=+e.target.value;setRangeFill(e.target);updateMuteIcon()});
+document.getElementById("mute-btn").addEventListener("click",()=>{
+  audio.muted=!audio.muted; updateMuteIcon();
+});
+document.getElementById("shuffle-btn").addEventListener("click",function(){
+  state.shuffle=!state.shuffle; this.classList.toggle("active",state.shuffle);
+});
+document.getElementById("repeat-btn").addEventListener("click",function(){
+  state.repeat=!state.repeat; this.classList.toggle("active",state.repeat);
+});
+
+function updatePlayIcon(playing){
+  const el=document.getElementById("play-main");
+  el.innerHTML = playing
+    ? '<i data-lucide="pause" fill="currentColor" style="width:18px;height:18px"></i>'
+    : '<i data-lucide="play" fill="currentColor" style="width:18px;height:18px;margin-left:2px"></i>';
+  lucide.createIcons();
+}
+function updateMuteIcon(){
+  const el=document.getElementById("mute-btn");
+  const v=audio.muted||audio.volume===0?"volume-x":"volume-2";
+  el.innerHTML=`<i data-lucide="${v}" style="width:16px;height:16px"></i>`;
+  lucide.createIcons();
+}
+function setRangeFill(input){
+  const min=+input.min||0,max=+input.max||1,val=+input.value;
+  const p=max>min?((val-min)/(max-min))*100:0;
+  input.style.setProperty("--p",p+"%");
+}
+function fmt(s){if(!isFinite(s))return"0:00";const m=Math.floor(s/60),ss=Math.floor(s%60);return m+":"+String(ss).padStart(2,"0")}
+
+function renderPlayerLeft(){
+  const cur=state.index>=0?state.queue[state.index]:null;
+  const el=document.getElementById("pl-left");
+  if(!cur){el.innerHTML='<div style="font-size:14px;color:var(--text-sub)">Select a song to play</div>';return}
+  el.innerHTML=`
+    <img src="${cur.cover}" alt="" />
+    <div class="pl-info">
+      <div class="t">${esc(cur.title)}</div>
+      <div class="a">${esc(cur.artist)}</div>
+    </div>
+    <button class="ctrl-btn" style="margin-left:8px"><i data-lucide="heart" style="width:16px;height:16px"></i></button>
+  `;
+  lucide.createIcons();
+}
+
+/* ============== ROUTING & VIEWS ============== */
+const view=document.getElementById("view");
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+function navActive(name){
+  document.querySelectorAll("[data-nav]").forEach(a=>a.classList.toggle("active",a.dataset.nav===name));
+}
+
+function songCardHTML(s){
+  return `<div class="card" data-play="${s.id}">
+    <div class="card-cover">
+      <img src="${s.cover}" alt="${esc(s.title)}" loading="lazy" />
+      <button class="card-play" data-play="${s.id}"><i data-lucide="play" fill="currentColor" style="width:20px;height:20px;margin-left:2px"></i></button>
+    </div>
+    <div class="card-title">${esc(s.title)}</div>
+    <div class="card-sub">${esc(s.artist)}</div>
+  </div>`;
+}
+function plCardHTML(p,cover){
+  return `<a class="card" href="#/playlist/${encodeURIComponent(p.name)}">
+    <div class="card-cover">
+      <img src="${cover}" alt="${esc(p.name)}" loading="lazy" />
+      <span class="card-play"><i data-lucide="play" fill="currentColor" style="width:20px;height:20px;margin-left:2px"></i></span>
+    </div>
+    <div class="card-title">${esc(p.name)}</div>
+    <div class="card-sub">${esc(p.description)}</div>
+  </a>`;
+}
+
+function renderHome(){
+  navActive("home");
+  const h=new Date().getHours();
+  const greet=h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+  const trending=SONGS.slice(0,6);
+  const more=SONGS.slice(6,12);
+  view.innerHTML=`
+    <div class="hero">
+      <h1 class="display">${greet}</h1>
+      <div class="quick-grid">
+        ${PLAYLISTS.slice(0,6).map((p,i)=>`
+          <a class="quick-tile" href="#/playlist/${encodeURIComponent(p.name)}">
+            <img src="${SONGS[i*3].cover}" alt="" />
+            <span>${esc(p.name)}</span>
+          </a>`).join("")}
+      </div>
+    </div>
+    <section class="section">
+      <div class="section-head"><h2 class="display">Trending now</h2><a class="show-all" href="#/playlist/All Tracks">Show all</a></div>
+      <div class="grid">${trending.map(songCardHTML).join("")}</div>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2 class="display">Made for you</h2><span class="show-all">Show all</span></div>
+      <div class="grid">${PLAYLISTS.map((p,i)=>plCardHTML(p,SONGS[(i*4+1)%SONGS.length].cover)).join("")}</div>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2 class="display">Recommended</h2><span class="show-all">Show all</span></div>
+      <div class="grid">${more.map(songCardHTML).join("")}</div>
+    </section>
+    <footer class="footer">© ${new Date().getFullYear()} Singwithme. Crafted with love for music lovers.</footer>
+  `;
+  lucide.createIcons();
+  attachCardPlay(SONGS);
+}
+
+function renderSearch(){
+  navActive("search");
+  view.innerHTML=`
+    <div class="section">
+      <div class="search-input-wrap">
+        <i data-lucide="search" style="width:18px;height:18px"></i>
+        <input id="q" class="search-input" placeholder="What do you want to play?" autofocus />
+      </div>
+      <div id="results"></div>
+    </div>
+  `;
+  lucide.createIcons();
+  const cats=["Hits","Romance","Mass","Soulful","Festive","Devotional","Dance","Singles","Chillax"];
+  const renderResults=q=>{
+    const res=document.getElementById("results");
+    if(!q.trim()){
+      res.innerHTML=`
+        <h2 class="display" style="font-size:24px;margin-bottom:16px">Browse all</h2>
+        <div class="cat-grid">${cats.map((c,i)=>`<a class="cat-card" style="background:${CAT_COLORS[i%CAT_COLORS.length]}" href="#/playlist/${encodeURIComponent(c==="Hits"?"Today's Top Hits":c==="Romance"?"Romance Vibes":c==="Mass"?"Mass Anthems":c==="Soulful"?"Soulful Sessions":c==="Festive"?"Festive Mood":"All Tracks")}">${c}</a>`).join("")}</div>`;
+      return;
+    }
+    const n=q.toLowerCase();
+    const found=SONGS.filter(s=>s.title.toLowerCase().includes(n)||s.album.toLowerCase().includes(n)||s.artist.toLowerCase().includes(n));
+    res.innerHTML=`<h2 class="display" style="font-size:24px;margin-bottom:16px">${found.length} result${found.length===1?"":"s"}</h2>
+      <div class="grid">${found.map(songCardHTML).join("")}</div>`;
+    lucide.createIcons();
+    attachCardPlay(found);
+  };
+  document.getElementById("q").addEventListener("input",e=>renderResults(e.target.value));
+  renderResults("");
+}
+
+function renderPlaylist(name){
+  navActive(null);
+  const decoded=decodeURIComponent(name);
+  const p=PLAYLISTS.find(x=>x.name===decoded);
+  const tracks=p?SONGS.filter(p.filter):SONGS;
+  const cover=tracks[0]?.cover||SONGS[0].cover;
+  view.innerHTML=`
+    <div class="pl-hero">
+      <img src="${cover}" alt="" />
+      <div class="pl-hero-info">
+        <div class="kicker">Playlist</div>
+        <h1 class="display">${esc(decoded)}</h1>
+        <div class="meta">${esc(p?.description||"Curated playlist")} · <strong>Singwithme</strong> · ${tracks.length} songs</div>
+      </div>
+    </div>
+    <div class="pl-actions" style="display:flex;align-items:center;gap:16px">
+      <button class="play-btn" id="pl-play"><i data-lucide="play" fill="currentColor" style="width:24px;height:24px;margin-left:3px"></i></button>
+      <button id="pl-shuffle" title="Shuffle play" style="background:none;border:none;color:var(--text-sub);cursor:pointer;padding:8px;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600"><i data-lucide="shuffle" style="width:24px;height:24px"></i><span>Shuffle</span></button>
+    </div>
+    <div class="track-list">
+      <div class="track-head"><div>#</div><div>Title</div><div>Album</div><div></div><div style="text-align:right"><i data-lucide="clock" style="width:16px;height:16px"></i></div></div>
+      ${tracks.map((s,i)=>`
+        <div class="track-row" data-play="${s.id}">
+          <div>
+            <span class="track-num">${i+1}</span>
+            <span class="track-play"><i data-lucide="play" fill="currentColor" style="width:14px;height:14px"></i></span>
+          </div>
+          <div class="track-info">
+            <img src="${s.cover}" alt="" loading="lazy" />
+            <div class="ti-meta">
+              <div class="ti-title" data-id="${s.id}">${esc(s.title)}</div>
+              <div class="ti-artist">${esc(s.artist)}</div>
+            </div>
+          </div>
+          <div class="track-album">${esc(s.album)}</div>
+          <div><button class="dl-btn" data-dl="${s.id}" title="Download"><i data-lucide="download" style="width:16px;height:16px"></i></button></div>
+          <div class="track-time">—</div>
+        </div>
+      `).join("")}
+    </div>
+    <div style="height:24px"></div>
+  `;
+  lucide.createIcons();
+  document.getElementById("pl-play").addEventListener("click",()=>{
+    if(state.queue===tracks && state.index>=0){togglePlay();return;}
+    playSong(tracks[0],tracks);
+  });
+  document.getElementById("pl-shuffle").addEventListener("click",()=>{
+    state.shuffle=true;
+    document.getElementById("shuffle-btn")?.classList.add("active");
+    const shuffled=tracks.slice().sort(()=>Math.random()-0.5);
+    playSong(shuffled[0],shuffled);
+  });
+  attachCardPlay(tracks);
+  view.querySelectorAll("[data-dl]").forEach(btn=>{
+    btn.addEventListener("click",async e=>{
+      e.preventDefault(); e.stopPropagation();
+      const s=tracks.find(x=>x.id===btn.dataset.dl); if(!s) return;
+      const icon=btn.innerHTML; btn.innerHTML='<i data-lucide="loader" style="width:16px;height:16px"></i>'; lucide.createIcons();
+      try{
+        const r=await fetch(s.url); const blob=await r.blob();
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a"); a.href=url; a.download=`${s.title}.mp3`; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1000);
+        btn.innerHTML='<i data-lucide="check" style="width:16px;height:16px"></i>'; lucide.createIcons();
+      }catch{ btn.innerHTML=icon; lucide.createIcons(); alert("Download failed"); }
+    });
+  });
+  refreshTrackHighlights();
+}
+
+function attachCardPlay(queue){
+  view.querySelectorAll("[data-play]").forEach(el=>{
+    el.addEventListener("click",e=>{
+      e.preventDefault(); e.stopPropagation();
+      const id=el.dataset.play;
+      const s=queue.find(x=>x.id===id)||SONGS.find(x=>x.id===id);
+      if(!s) return;
+      if(state.index>=0 && state.queue[state.index]?.id===s.id){togglePlay();return;}
+      playSong(s,queue);
+    });
+  });
+}
+function refreshTrackHighlights(){
+  const cur=state.index>=0?state.queue[state.index]:null;
+  view.querySelectorAll(".ti-title").forEach(el=>{
+    el.classList.toggle("current",cur && el.dataset.id===cur.id);
+  });
+}
+
+/* ============== ROUTER ============== */
+function route(){
+  const h=location.hash||"#/";
+  if(h.startsWith("#/playlist/")) renderPlaylist(h.slice("#/playlist/".length));
+  else if(h==="#/search") renderSearch();
+  else renderHome();
+  view.scrollTop=0;
+}
+window.addEventListener("hashchange",route);
+
+/* ============== INIT ============== */
+function renderSidebarPlaylists(){
+  const el=document.getElementById("playlist-list");
+  el.innerHTML=`
+    <a class="playlist-item" href="#/playlist/All%20Tracks">
+      <div class="playlist-thumb liked"><i data-lucide="heart" fill="currentColor" style="width:20px;height:20px"></i></div>
+      <div class="playlist-meta"><div class="t">Liked Songs</div><div class="s">Playlist</div></div>
+    </a>
+    ${PLAYLISTS.map(p=>`
+      <a class="playlist-item" href="#/playlist/${encodeURIComponent(p.name)}">
+        <div class="playlist-thumb"><i data-lucide="music-2" style="width:20px;height:20px"></i></div>
+        <div class="playlist-meta"><div class="t">${esc(p.name)}</div><div class="s">Playlist · Singwithme</div></div>
+      </a>`).join("")}
+  `;
+  lucide.createIcons();
+}
+
+renderSidebarPlaylists();
+route();
+setRangeFill(document.getElementById("volume"));
+setRangeFill(document.getElementById("seek"));
+lucide.createIcons();
+</script>
+</body>
+</html>
